@@ -80,19 +80,19 @@ Start a `Visdom` server with `python -m visdom.server`, it will serve `http://lo
 #### A2C
 
 ```bash
-python main.py --env-name "PongNoFrameskip-v4"
+python main.py --env-name "tcn-push-v0"
 ```
 
 #### PPO
 
 ```bash
-python main.py --env-name "PongNoFrameskip-v4" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 8 --num-steps 128 --num-mini-batch 4 --vis-interval 1 --log-interval 1 --use-linear-lr-decay --use-linear-clip-decay --entropy-coef 0.01
+python main.py --env-name "tcn-push-v0" --algo ppo --use-gae --lr 2.5e-4 --clip-param 0.1 --value-loss-coef 0.5 --num-processes 8 --num-steps 128 --num-mini-batch 4 --vis-interval 1 --log-interval 1 --use-linear-lr-decay --use-linear-clip-decay --entropy-coef 0.01
 ```
 
 #### ACKTR
 
 ```bash
-python main.py --env-name "PongNoFrameskip-v4" --algo acktr --num-processes 32 --num-steps 20
+python main.py --env-name "tcn-push-v0" --algo acktr --num-processes 32 --num-steps 20
 ```
 
 ### MuJoCo
@@ -126,7 +126,7 @@ Disclaimer: I might have used different hyper-parameters to train these models.
 ### Atari
 
 ```bash
-python enjoy.py --load-dir trained_models/a2c --env-name "PongNoFrameskip-v4"
+python enjoy.py --load-dir trained_models/a2c --env-name "tcn-push-v0"
 ```
 
 ### MuJoCo

@@ -10,15 +10,22 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from gym.envs.registration import register
 
 import algo
 from arguments import get_args
+from bulletrobotgym.env_tcn import TcnPush as PushingEnv
 from envs import make_vec_envs
 from model import Policy
 from storage import RolloutStorage
-from utils import get_vec_normalize
+from utils import get_vec_normalize, update_linear_schedule
 from visualize import visdom_plot
-from utils import update_linear_schedule
+
+register(
+    id='tcn-push-v0',
+    entry_point='bulletrobotgym.env_tcn:TcnPush',
+)
+
 
 args = get_args()
 
@@ -63,10 +70,10 @@ def main():
         win = None
 
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
-                        args.gamma, args.log_dir, args.add_timestep, device, False)
+                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
     actor_critic = Policy(envs.observation_space.shape, envs.action_space,
-        base_kwargs={'recurrent': args.recurrent_policy})
+                          base_kwargs={'recurrent': args.recurrent_policy})
     actor_critic.to(device)
 
     if args.algo == 'a2c':
@@ -77,15 +84,15 @@ def main():
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
                          args.value_loss_coef, args.entropy_coef, lr=args.lr,
-                               eps=args.eps,
-                               max_grad_norm=args.max_grad_norm)
+                         eps=args.eps,
+                         max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
         agent = algo.A2C_ACKTR(actor_critic, args.value_loss_coef,
                                args.entropy_coef, acktr=True)
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
-                        envs.observation_space.shape, envs.action_space,
-                        actor_critic.recurrent_hidden_state_size)
+                              envs.observation_space.shape, envs.action_space,
+                              actor_critic.recurrent_hidden_state_size)
 
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
@@ -96,7 +103,7 @@ def main():
     start = time.time()
     for j in range(num_updates):
 
-        if args.use_linear_lr_decay:            
+        if args.use_linear_lr_decay:
             # decrease learning rate linearly
             if args.algo == "acktr":
                 # use optimizer's learning rate since it's hard-coded in kfac.py
@@ -104,16 +111,16 @@ def main():
             else:
                 update_linear_schedule(agent.optimizer, j, num_updates, args.lr)
 
-        if args.algo == 'ppo' and args.use_linear_lr_decay:      
-            agent.clip_param = args.clip_param  * (1 - j / float(num_updates))
-                
+        if args.algo == 'ppo' and args.use_linear_lr_decay:
+            agent.clip_param = args.clip_param * (1 - j / float(num_updates))
+
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
                 value, action, action_log_prob, recurrent_hidden_states = actor_critic.act(
-                        rollouts.obs[step],
-                        rollouts.recurrent_hidden_states[step],
-                        rollouts.masks[step])
+                    rollouts.obs[step],
+                    rollouts.recurrent_hidden_states[step],
+                    rollouts.masks[step])
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
@@ -125,7 +132,8 @@ def main():
             # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
-            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks)
+            rollouts.insert(obs, recurrent_hidden_states, action,
+                            action_log_prob, value, reward, masks)
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
@@ -160,14 +168,14 @@ def main():
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             end = time.time()
             print("Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n".
-                format(j, total_num_steps,
-                       int(total_num_steps / (end - start)),
-                       len(episode_rewards),
-                       np.mean(episode_rewards),
-                       np.median(episode_rewards),
-                       np.min(episode_rewards),
-                       np.max(episode_rewards), dist_entropy,
-                       value_loss, action_loss))
+                  format(j, total_num_steps,
+                         int(total_num_steps / (end - start)),
+                         len(episode_rewards),
+                         np.mean(episode_rewards),
+                         np.median(episode_rewards),
+                         np.min(episode_rewards),
+                         np.max(episode_rewards), dist_entropy,
+                         value_loss, action_loss))
 
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
@@ -185,7 +193,7 @@ def main():
 
             obs = eval_envs.reset()
             eval_recurrent_hidden_states = torch.zeros(args.num_processes,
-                            actor_critic.recurrent_hidden_state_size, device=device)
+                                                       actor_critic.recurrent_hidden_state_size, device=device)
             eval_masks = torch.zeros(args.num_processes, 1, device=device)
 
             while len(eval_episode_rewards) < 10:
@@ -205,8 +213,8 @@ def main():
             eval_envs.close()
 
             print(" Evaluation using {} episodes: mean reward {:.5f}\n".
-                format(len(eval_episode_rewards),
-                       np.mean(eval_episode_rewards)))
+                  format(len(eval_episode_rewards),
+                         np.mean(eval_episode_rewards)))
 
         if args.vis and j % args.vis_interval == 0:
             try:

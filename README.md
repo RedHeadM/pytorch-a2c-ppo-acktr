@@ -168,3 +168,8 @@ python enjoy.py --load-dir trained_models/ppo --env-name "Reacher-v2"
 ![QbertNoFrameskip-v4](imgs/acktr_qbert.png)
 
 ![beamriderNoFrameskip-v4](imgs/acktr_beamrider.png)
+
+
+usage:
+python main.py --env-name "tcn-push-v0" --algo ppo --use-gae --vis-interval 1  --log-interval 1 --num-steps 20048 --num-processes 1 --lr 3e-4 --entropy-coef 0.0 --value-loss-coef 0.5 --ppo-epoch 10 --num-mini-batch 32 --gamma 0.99 --tau 0.95 --num-frames 10000000 --use-linear-lr-decay --save-dir /tmp/ppo_push_fixed --save-interval 10000 
+

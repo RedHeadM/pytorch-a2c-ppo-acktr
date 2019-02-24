@@ -13,7 +13,7 @@ plt.switch_backend('agg')
 import numpy as np
 from scipy.signal import medfilt
 matplotlib.rcParams.update({'font.size': 8})
-
+import pandas
 
 def smooth_reward_curve(x, y):
     # Halfwidth of our smoothing convolution
@@ -62,8 +62,11 @@ def load_data(indir, smooth, bin_size):
             for line in f:
                 tmp = line.split(',')
                 t_time = float(tmp[2])
-                tmp = [t_time, int(tmp[1]), float(tmp[0])]
-                datas.append(tmp)
+                try:
+                    tmp = [t_time, int(tmp[1]), float(tmp[0])]
+                    datas.append(tmp)
+                except ValueError:
+                    pass
 
     datas = sorted(datas, key=lambda d_entry: d_entry[0])
     result = []
@@ -100,6 +103,10 @@ color_defaults = [
     '#17becf'   # blue-teal
 ]
 
+
+def td_plot(writer,folder,smooth=1,bin_size=100):
+    tx, ty = load_data(folder, smooth, bin_size)
+    writer.add_scalar('train/rw', tx[-1],ty[-1])
 
 def visdom_plot(viz, win, folder, game, name, num_steps, bin_size=100, smooth=1):
     tx, ty = load_data(folder, smooth, bin_size)

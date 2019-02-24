@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from gym.envs.registration import register
+from tensorboardX import SummaryWriter
 
 from a2c_ppo_acktr import algo
 from a2c_ppo_acktr.arguments import get_args
@@ -19,7 +20,7 @@ from a2c_ppo_acktr.envs import make_vec_envs
 from a2c_ppo_acktr.model import Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from a2c_ppo_acktr.utils import get_vec_normalize, update_linear_schedule
-from a2c_ppo_acktr.visualize import visdom_plot
+from a2c_ppo_acktr.visualize import visdom_plot,td_plot
 register(
     id='tcn-push-v0',
     entry_point='bulletrobotgym.env_tcn:TcnPush',
@@ -59,6 +60,11 @@ except OSError:
 
 
 def main():
+
+    writer = SummaryWriter(os.path.join(
+        os.path.expanduser(args.save_dir), "tensorboard_log"))
+
+    os.environ['TCN_ENV_VID_LOG_FOLDER'] = os.path.join(args.save_dir,"train_vid")
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
 
@@ -177,7 +183,7 @@ def main():
 
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
-                and j % args.eval_interval == 0):  
+                and j % args.eval_interval == 0):
 
             vid_log_dir = os.getenv('TCN_ENV_VID_LOG_FOLDER', '/tmp/env_tcn/train_vid')
             os.environ['TCN_ENV_VID_LOG_FOLDER'] = os.path.join(vid_log_dir,"../eval_vid/","interval_"+str(j))
@@ -211,27 +217,30 @@ def main():
                                            for done_ in done],
                                            dtype=torch.float32,
                                            device=device)
-                
+
                 for info in infos:
                     if 'episode' in info.keys():
                         eval_episode_rewards.append(info['episode']['r'])
 
-            eval_envs.close() 
+            eval_envs.close()
             os.environ['TCN_ENV_VID_LOG_FOLDER'] = vid_log_dir
             os.environ['TCN_ENV_EVAL_EPISODE']='0'
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1000'
 
 
+            writer.add_scalar('eval/rw', np.mean(eval_episode_rewards), j)
             print(" Evaluation using {} episodes: mean reward {:.5f}\n".
                 format(len(eval_episode_rewards),
                        np.mean(eval_episode_rewards)))
 
         if args.vis and j % args.vis_interval == 0:
             try:
+                td_plot(writer,args.log_dir)
                 # Sometimes monitor doesn't properly flush the outputs
-                win = visdom_plot(viz, win, args.log_dir, args.env_name,
-                                  args.algo, args.num_env_steps)
+                # win = visdom_plot(viz, win, args.log_dir, args.env_name,
+                                  # args.algo, args.num_env_steps)
             except IOError:
+                print("plt error")
                 pass
 
 

@@ -51,9 +51,9 @@ def get_args():
                         help='number of environment steps to train (default: 10e6)')
     parser.add_argument('--env-name', default='PongNoFrameskip-v4',
                         help='environment to train on (default: PongNoFrameskip-v4)')
-    parser.add_argument('--log-dir', default='/tmp/gym/',
+    parser.add_argument('--log-dir', default='/tmp/pytorch_ppo/',
                         help='directory to save agent logs (default: /tmp/gym)')
-    parser.add_argument('--save-dir', default='./trained_models/',
+    parser.add_argument('--save-dir', default='/tmp/pytorch_ppo/',
                         help='directory to save agent logs (default: ./trained_models/)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
@@ -65,7 +65,7 @@ def get_args():
                         help='use a linear schedule on the learning rate')
     parser.add_argument('--use-linear-clip-decay', action='store_true', default=False,
                         help='use a linear schedule on the ppo clipping parameter')
-    parser.add_argument('--vis', action='store_true', default=False,
+    parser.add_argument('--vis', action='store_true', default=True,
                         help='enable visdom visualization')
     parser.add_argument('--port', type=int, default=8097,
                         help='port to run the server on (default: 8097)')

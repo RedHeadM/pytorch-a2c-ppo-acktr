@@ -109,16 +109,10 @@ def main():
             else:
                 update_linear_schedule(agent.optimizer, j, num_updates, args.lr)
 
-
-<< << << < HEAD
-   if args.algo == 'ppo' and args.use_linear_lr_decay:
+    if args.algo == 'ppo' and args.use_linear_clip_decay:
         agent.clip_param = args.clip_param * (1 - j / float(num_updates))
-== == == =
-   if args.algo == 'ppo' and args.use_linear_clip_decay:
-        agent.clip_param = args.clip_param * (1 - j / float(num_updates))
->>>>>> > upstream/master
 
-   for step in range(args.num_steps):
+    for step in range(args.num_steps):
         # Sample actions
         with torch.no_grad():
             value, action, action_log_prob, recurrent_hidden_states = actor_critic.act(

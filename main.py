@@ -40,7 +40,7 @@ torch.cuda.manual_seed_all(args.seed)
 if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
-
+torch.backends.cudnn.benchmark = True
 try:
     os.makedirs(args.log_dir)
 except OSError:
@@ -177,7 +177,12 @@ def main():
 
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
-                and j % args.eval_interval == 0):
+                and j % args.eval_interval == 0):  
+
+            vid_log_dir = os.getenv('TCN_ENV_VID_LOG_FOLDER', '/tmp/env_tcn/train_vid')
+            os.environ['TCN_ENV_VID_LOG_FOLDER'] = os.path.join(vid_log_dir,"../eval_vid/","interval_"+str(j))
+            os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1'
+            os.environ['TCN_ENV_EVAL_EPISODE']='1'
             eval_envs = make_vec_envs(
                 args.env_name, args.seed + args.num_processes, args.num_processes,
                 args.gamma, eval_log_dir, args.add_timestep, device, True)
@@ -211,7 +216,11 @@ def main():
                     if 'episode' in info.keys():
                         eval_episode_rewards.append(info['episode']['r'])
 
-            eval_envs.close()
+            eval_envs.close() 
+            os.environ['TCN_ENV_VID_LOG_FOLDER'] = vid_log_dir
+            os.environ['TCN_ENV_EVAL_EPISODE']='0'
+            os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1000'
+
 
             print(" Evaluation using {} episodes: mean reward {:.5f}\n".
                 format(len(eval_episode_rewards),

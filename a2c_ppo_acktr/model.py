@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from distributions import Categorical, DiagGaussian
-from utils import init
+from a2c_ppo_acktr.distributions import Categorical, DiagGaussian, Bernoulli
+from a2c_ppo_acktr.utils import init
 
 
 class Flatten(nn.Module):
@@ -13,17 +13,19 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, base_kwargs=None):
+    def __init__(self, obs_shape, action_space, base=None, base_kwargs=None):
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
+        if base is None:
+            if len(obs_shape) == 3:
+                base = CNNBase
+            elif len(obs_shape) == 1:
+                base = MLPBase
+            else:
+                raise NotImplementedError
 
-        if len(obs_shape) == 3:
-            self.base = CNNBase(obs_shape[0], **base_kwargs)
-        elif len(obs_shape) == 1:
-            self.base = MLPBase(obs_shape[0], **base_kwargs)
-        else:
-            raise NotImplementedError
+        self.base = base(obs_shape[0], **base_kwargs)
 
         if action_space.__class__.__name__ == "Discrete":
             num_outputs = action_space.n
@@ -31,6 +33,9 @@ class Policy(nn.Module):
         elif action_space.__class__.__name__ == "Box":
             num_outputs = action_space.shape[0]
             self.dist = DiagGaussian(self.base.output_size, num_outputs)
+        elif action_space.__class__.__name__ == "MultiBinary":
+            num_outputs = action_space.shape[0]
+            self.dist = Bernoulli(self.base.output_size, num_outputs)
         else:
             raise NotImplementedError
 

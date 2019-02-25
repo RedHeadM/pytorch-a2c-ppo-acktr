@@ -21,13 +21,20 @@ from a2c_ppo_acktr.model import Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from a2c_ppo_acktr.utils import get_vec_normalize, update_linear_schedule
 from a2c_ppo_acktr.visualize import visdom_plot,td_plot
+from bulletrobotgym.utils.blogging import log, suppress_logging,set_log_file
+
 register(
     id='tcn-push-v0',
     entry_point='bulletrobotgym.env_tcn:TcnPush',
 )
 
 args = get_args()
+args.log_dir=os.path.expanduser(args.log_dir)
 
+os.environ["OPENAI_LOGDIR"]=args.log_dir
+set_log_file(os.path.join(args.log_dir, "env.log"))
+
+log.info(args)
 assert args.algo in ['a2c', 'ppo', 'acktr']
 if args.recurrent_policy:
     assert args.algo in ['a2c', 'ppo'], \
@@ -37,10 +44,10 @@ num_updates = int(args.num_env_steps) // args.num_steps // args.num_processes
 
 torch.manual_seed(args.seed)
 torch.cuda.manual_seed_all(args.seed)
-
 if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+    log.info("cuda_deterministic ")
 torch.backends.cudnn.benchmark = True
 try:
     os.makedirs(args.log_dir)
@@ -171,7 +178,7 @@ def main():
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             end = time.time()
-            print("Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n".
+            log.info("Updates {}, num timesteps {}, FPS {}  Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}".
                 format(j, total_num_steps,
                        int(total_num_steps / (end - start)),
                        len(episode_rewards),
@@ -190,47 +197,48 @@ def main():
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1'
             os.environ['TCN_ENV_EVAL_EPISODE']='1'
             with redirect_stdout(open(os.devnull, "w")):# no stdout
-                eval_envs = make_vec_envs(
-                    args.env_name, args.seed + args.num_processes, args.num_processes,
-                    args.gamma, eval_log_dir, args.add_timestep, device, True)
+                with suppress_logging():
+                    eval_envs = make_vec_envs(
+                        args.env_name, args.seed + args.num_processes, args.num_processes,
+                        args.gamma, eval_log_dir, args.add_timestep, device, True)
 
-                vec_norm = get_vec_normalize(eval_envs)
-                if vec_norm is not None:
-                    vec_norm.eval()
-                    vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
+                    vec_norm = get_vec_normalize(eval_envs)
+                    if vec_norm is not None:
+                        vec_norm.eval()
+                        vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
 
-                eval_episode_rewards = []
+                    eval_episode_rewards = []
 
-                obs = eval_envs.reset()
-                eval_recurrent_hidden_states = torch.zeros(args.num_processes,
-                                actor_critic.recurrent_hidden_state_size, device=device)
-                eval_masks = torch.zeros(args.num_processes, 1, device=device)
+                    obs = eval_envs.reset()
+                    eval_recurrent_hidden_states = torch.zeros(args.num_processes,
+                                    actor_critic.recurrent_hidden_state_size, device=device)
+                    eval_masks = torch.zeros(args.num_processes, 1, device=device)
 
-                while len(eval_episode_rewards) < 1:
-                    with torch.no_grad():
-                        _, action, _, eval_recurrent_hidden_states = actor_critic.act(
-                            obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
+                    while len(eval_episode_rewards) < 1:
+                        with torch.no_grad():
+                            _, action, _, eval_recurrent_hidden_states = actor_critic.act(
+                                obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
 
-                    # Obser reward and next obs
-                    obs, reward, done, infos = eval_envs.step(action)
+                        # Obser reward and next obs
+                        obs, reward, done, infos = eval_envs.step(action)
 
-                    eval_masks = torch.tensor([[0.0] if done_ else [1.0]
-                                               for done_ in done],
-                                               dtype=torch.float32,
-                                               device=device)
+                        eval_masks = torch.tensor([[0.0] if done_ else [1.0]
+                                                   for done_ in done],
+                                                   dtype=torch.float32,
+                                                   device=device)
 
-                    for info in infos:
-                        if 'episode' in info.keys():
-                            eval_episode_rewards.append(info['episode']['r'])
+                        for info in infos:
+                            if 'episode' in info.keys():
+                                eval_episode_rewards.append(info['episode']['r'])
 
-            eval_envs.close()
+                    eval_envs.close()
             os.environ['TCN_ENV_VID_LOG_FOLDER'] = vid_log_dir
             os.environ['TCN_ENV_EVAL_EPISODE']='0'
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1000'
 
 
             writer.add_scalar('eval/rw', np.mean(eval_episode_rewards), j)
-            print(" Evaluation using {} episodes: mean reward {:.5f}\n".
+            log.info(" Evaluation using {} episodes: mean reward {:.5f}\n".
                 format(len(eval_episode_rewards),
                        np.mean(eval_episode_rewards)))
 

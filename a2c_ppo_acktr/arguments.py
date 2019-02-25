@@ -1,8 +1,9 @@
 import argparse
-
+import datetime
 import torch
-
-
+import os.path as op
+start_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+_default_dir=op.join("/tmp/pytorch_ppo",start_dt)
 def get_args():
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument('--algo', default='a2c',
@@ -51,9 +52,9 @@ def get_args():
                         help='number of environment steps to train (default: 10e6)')
     parser.add_argument('--env-name', default='PongNoFrameskip-v4',
                         help='environment to train on (default: PongNoFrameskip-v4)')
-    parser.add_argument('--log-dir', default='/tmp/pytorch_ppo/',
+    parser.add_argument('--log-dir', default=_default_dir,
                         help='directory to save agent logs (default: /tmp/gym)')
-    parser.add_argument('--save-dir', default='/tmp/pytorch_ppo/',
+    parser.add_argument('--save-dir', default=op.join(_default_dir,"checkpoints"),
                         help='directory to save agent logs (default: ./trained_models/)')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')

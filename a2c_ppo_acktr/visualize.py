@@ -103,10 +103,15 @@ color_defaults = [
     '#17becf'   # blue-teal
 ]
 
-
+_last_idx_plot=None
 def td_plot(writer,folder,smooth=1,bin_size=100):
-    tx, ty = load_data(folder, smooth, bin_size)
-    writer.add_scalar('train/rw', tx[-1],ty[-1])
+    global _last_idx_plot#todo fix last plot idx
+    tx, ty_rw = load_data(folder, smooth, bin_size)
+    idx= 0 if _last_idx_plot is None else _last_idx_plot
+
+    _last_idx_plot=len(tx)
+    for i,rw in zip(tx[idx:],ty_rw[idx:]):
+        writer.add_scalar('train/rw',rw,i)
 
 def visdom_plot(viz, win, folder, game, name, num_steps, bin_size=100, smooth=1):
     tx, ty = load_data(folder, smooth, bin_size)

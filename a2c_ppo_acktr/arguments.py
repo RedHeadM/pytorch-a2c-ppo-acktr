@@ -2,7 +2,7 @@ import argparse
 import datetime
 import torch
 import os.path as op
-start_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+start_dt = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
 _default_dir=op.join("/tmp/pytorch_ppo",start_dt)
 def get_args():
     parser = argparse.ArgumentParser(description='RL')
@@ -66,7 +66,7 @@ def get_args():
                         help='use a linear schedule on the learning rate')
     parser.add_argument('--use-linear-clip-decay', action='store_true', default=False,
                         help='use a linear schedule on the ppo clipping parameter')
-    parser.add_argument('--vis', action='store_true', default=True,
+    parser.add_argument('--vis', action='store_true', default=False,
                         help='enable visdom visualization')
     parser.add_argument('--port', type=int, default=8097,
                         help='port to run the server on (default: 8097)')

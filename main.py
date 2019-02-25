@@ -32,7 +32,11 @@ args = get_args()
 args.log_dir=os.path.expanduser(args.log_dir)
 
 os.environ["OPENAI_LOGDIR"]=args.log_dir
+os.environ["TCN_ENV_VID_LOG_FOLDER"]='train_vid'
+
+os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '10'
 set_log_file(os.path.join(args.log_dir, "env.log"))
+
 
 log.info(args)
 assert args.algo in ['a2c', 'ppo', 'acktr']
@@ -48,7 +52,8 @@ if args.cuda and torch.cuda.is_available() and args.cuda_deterministic:
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     log.info("cuda_deterministic ")
-torch.backends.cudnn.benchmark = True
+else:
+    torch.backends.cudnn.benchmark = True
 try:
     os.makedirs(args.log_dir)
 except OSError:
@@ -71,7 +76,6 @@ def main():
     writer = SummaryWriter(os.path.join(
         os.path.expanduser(args.save_dir), "tensorboard_log"))
 
-    os.environ['TCN_ENV_VID_LOG_FOLDER'] = os.path.join(args.save_dir,"train_vid")
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
 
@@ -193,7 +197,8 @@ def main():
                 and j % args.eval_interval == 0):
 
             vid_log_dir = os.getenv('TCN_ENV_VID_LOG_FOLDER', '/tmp/env_tcn/train_vid')
-            os.environ['TCN_ENV_VID_LOG_FOLDER'] = os.path.join(vid_log_dir,"../eval_vid/","interval_"+str(j))
+            vid_log_inter = os.getenv('TCN_ENV_VID_LOG_INTERVAL', '100')
+            os.environ['TCN_ENV_VID_LOG_FOLDER'] ="eval_vid"# os.path.join(vid_log_dir,"../eval_vid/","interval_"+str(j))
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1'
             os.environ['TCN_ENV_EVAL_EPISODE']='1'
             with redirect_stdout(open(os.devnull, "w")):# no stdout
@@ -234,7 +239,7 @@ def main():
                     eval_envs.close()
             os.environ['TCN_ENV_VID_LOG_FOLDER'] = vid_log_dir
             os.environ['TCN_ENV_EVAL_EPISODE']='0'
-            os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1000'
+            os.environ['TCN_ENV_VID_LOG_INTERVAL'] = vid_log_inter
 
 
             writer.add_scalar('eval/rw', np.mean(eval_episode_rewards), j)
@@ -242,7 +247,7 @@ def main():
                 format(len(eval_episode_rewards),
                        np.mean(eval_episode_rewards)))
 
-        if args.vis and j % args.vis_interval == 0:
+        if j % args.vis_interval == 0:
             try:
                 td_plot(writer,args.log_dir)
                 # Sometimes monitor doesn't properly flush the outputs

@@ -68,26 +68,33 @@ def load_data(indir, smooth, bin_size):
                 except ValueError:
                     pass
 
+    # sort by time
     datas = sorted(datas, key=lambda d_entry: d_entry[0])
     result = []
+    len_eps = []
     timesteps = 0
     for i in range(len(datas)):
         result.append([timesteps, datas[i][-1]])
+        len_eps.append([timesteps, datas[i][1]])
         timesteps += datas[i][1]
 
     if len(result) < bin_size:
         return [None, None]
 
     x, y = np.array(result)[:, 0], np.array(result)[:, 1]
+    y_len= np.array(len_eps)[:, 1]
 
     if smooth == 1:
         x, y = smooth_reward_curve(x, y)
+        # _, y_len = smooth_reward_curve(x, y_len)
 
     if smooth == 2:
         y = medfilt(y, kernel_size=9)
+        # y_len = medfilt(y_len, kernel_size=9)
 
     x, y = fix_point(x, y, bin_size)
-    return [x, y]
+    _, y_len = fix_point(x, y_len, bin_size)
+    return [x, y,y_len]
 
 
 color_defaults = [
@@ -106,15 +113,16 @@ color_defaults = [
 _last_idx_plot=None
 def td_plot(writer,folder,smooth=1,bin_size=100):
     global _last_idx_plot#todo fix last plot idx
-    tx, ty_rw = load_data(folder, smooth, bin_size)
+    tx, ty_rw,y_len = load_data(folder, smooth, bin_size)
     idx= 0 if _last_idx_plot is None else _last_idx_plot
 
     _last_idx_plot=len(tx)
-    for i,rw in zip(tx[idx:],ty_rw[idx:]):
+    for i,rw,len_ep in zip(tx[idx:],ty_rw[idx:],y_len[idx:]):
         writer.add_scalar('train/rw',rw,i)
+        writer.add_scalar('train/len_ep',len_ep,i)
 
 def visdom_plot(viz, win, folder, game, name, num_steps, bin_size=100, smooth=1):
-    tx, ty = load_data(folder, smooth, bin_size)
+    tx, ty,_ = load_data(folder, smooth, bin_size)
     if tx is None or ty is None:
         return win
 

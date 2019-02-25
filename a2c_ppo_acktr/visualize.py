@@ -86,11 +86,11 @@ def load_data(indir, smooth, bin_size):
 
     if smooth == 1:
         x, y = smooth_reward_curve(x, y)
-        # _, y_len = smooth_reward_curve(x, y_len)
+        _, y_len = smooth_reward_curve(x, y_len)
 
     if smooth == 2:
         y = medfilt(y, kernel_size=9)
-        # y_len = medfilt(y_len, kernel_size=9)
+        y_len = medfilt(y_len, kernel_size=9)
 
     x, y = fix_point(x, y, bin_size)
     _, y_len = fix_point(x, y_len, bin_size)

@@ -34,7 +34,7 @@ args.log_dir=os.path.expanduser(args.log_dir)
 os.environ["OPENAI_LOGDIR"]=args.log_dir
 os.environ["TCN_ENV_VID_LOG_FOLDER"]='train_vid'
 
-os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '10'
+os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1000'
 set_log_file(os.path.join(args.log_dir, "env.log"))
 
 
@@ -74,7 +74,7 @@ except OSError:
 def main():
 
     writer = SummaryWriter(os.path.join(
-        os.path.expanduser(args.save_dir), "tensorboard_log"))
+        os.path.expanduser(args.log_dir), "tensorboard_log"))
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
@@ -114,7 +114,6 @@ def main():
     rollouts.to(device)
 
     episode_rewards = deque(maxlen=10)
-
     start = time.time()
     for j in range(num_updates):
 
@@ -203,8 +202,9 @@ def main():
             os.environ['TCN_ENV_EVAL_EPISODE']='1'
             with redirect_stdout(open(os.devnull, "w")):# no stdout
                 with suppress_logging():
+                    # eval envs
                     eval_envs = make_vec_envs(
-                        args.env_name, args.seed + args.num_processes, args.num_processes,
+                        args.env_name, args.seed + args.num_processes,1,
                         args.gamma, eval_log_dir, args.add_timestep, device, True)
 
                     vec_norm = get_vec_normalize(eval_envs)
@@ -236,7 +236,8 @@ def main():
                             if 'episode' in info.keys():
                                 eval_episode_rewards.append(info['episode']['r'])
 
-                    eval_envs.close()
+                    obs = eval_envs.reset()
+                    # eval_envs.close()
             os.environ['TCN_ENV_VID_LOG_FOLDER'] = vid_log_dir
             os.environ['TCN_ENV_EVAL_EPISODE']='0'
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = vid_log_inter

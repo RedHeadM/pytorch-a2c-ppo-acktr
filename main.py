@@ -236,8 +236,7 @@ def main():
                             if 'episode' in info.keys():
                                 eval_episode_rewards.append(info['episode']['r'])
 
-                    obs = eval_envs.reset()
-                    # eval_envs.close()
+                    eval_envs.close()
             os.environ['TCN_ENV_VID_LOG_FOLDER'] = vid_log_dir
             os.environ['TCN_ENV_EVAL_EPISODE']='0'
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = vid_log_inter

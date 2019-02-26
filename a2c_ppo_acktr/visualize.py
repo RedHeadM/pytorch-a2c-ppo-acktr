@@ -40,7 +40,7 @@ def fix_point(x, y, interval):
 
         while pointer + 1 < len(x) and tmpx > x[pointer + 1]:
             pointer += 1
-
+        pointer=min(len(x)-2,pointer)
         if pointer + 1 < len(x):
             alpha = (y[pointer + 1] - y[pointer]) / \
                 (x[pointer + 1] - x[pointer])
@@ -83,18 +83,20 @@ def load_data(indir, smooth, bin_size):
 
     x, y = np.array(result)[:, 0], np.array(result)[:, 1]
     y_len= np.array(len_eps)[:, 1]
-
+    assert x.shape[0]==y.shape[0],'x shape {} and y shape{}'.format(x.shape,y.shape)
     if smooth == 1:
-        x, y = smooth_reward_curve(x, y)
         _, y_len = smooth_reward_curve(x, y_len)
+        x, y = smooth_reward_curve(x, y)
 
     if smooth == 2:
         y = medfilt(y, kernel_size=9)
         y_len = medfilt(y_len, kernel_size=9)
 
-    x, y = fix_point(x, y, bin_size)
+    assert x.shape[0]==y.shape[0],'x shape {} and y shape{}'.format(x.shape,y.shape)
+    y_len=y_len[:len(x)]
+    assert x.shape[0]==y_len.shape[0],'x shape {} and y_len shape{}'.format(x.shape,y_len.shape)
     _, y_len = fix_point(x, y_len, bin_size)
-    print("len y",y_len)
+    x, y = fix_point(x, y, bin_size)
     return x, y,y_len
 
 

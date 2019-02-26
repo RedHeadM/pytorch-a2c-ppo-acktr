@@ -79,7 +79,7 @@ def load_data(indir, smooth, bin_size):
         timesteps += datas[i][1]
 
     if len(result) < bin_size:
-        return [None, None]
+        return [None, None,None]
 
     x, y = np.array(result)[:, 0], np.array(result)[:, 1]
     y_len= np.array(len_eps)[:, 1]
@@ -94,7 +94,8 @@ def load_data(indir, smooth, bin_size):
 
     x, y = fix_point(x, y, bin_size)
     _, y_len = fix_point(x, y_len, bin_size)
-    return [x, y,y_len]
+    print("len y",y_len)
+    return x, y,y_len
 
 
 color_defaults = [
@@ -113,7 +114,9 @@ color_defaults = [
 _last_idx_plot=None
 def td_plot(writer,folder,smooth=1,bin_size=100):
     global _last_idx_plot#todo fix last plot idx
-    tx, ty_rw,y_len = load_data(folder, smooth, bin_size)
+    tx, ty_rw,y_len= load_data(folder, smooth, bin_size)
+    if tx is None:
+	return
     idx= 0 if _last_idx_plot is None else _last_idx_plot
 
     _last_idx_plot=len(tx)

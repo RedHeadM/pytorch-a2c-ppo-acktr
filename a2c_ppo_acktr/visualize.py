@@ -118,6 +118,7 @@ def td_plot(writer,folder,smooth=1,bin_size=100):
     global _last_idx_plot#todo fix last plot idx
     tx, ty_rw,y_len= load_data(folder, smooth, bin_size)
     if tx is None:
+        print('no data found')
         return
     idx= 0 if _last_idx_plot is None else _last_idx_plot
 

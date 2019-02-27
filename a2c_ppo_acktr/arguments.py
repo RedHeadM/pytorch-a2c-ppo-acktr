@@ -46,7 +46,7 @@ def get_args():
                         help='save interval, one save per n updates (default: 100)')
     parser.add_argument('--eval-interval', type=int, default=100,
                         help='eval interval, one eval per n updates (default: None)')
-    parser.add_argument('--vis-interval', type=int, default=1,
+    parser.add_argument('--vis-interval', type=int, default=10,
                         help='vis interval, one log per n updates (default: 100)')
     parser.add_argument('--num-env-steps', type=int, default=10e6,
                         help='number of environment steps to train (default: 10e6)')

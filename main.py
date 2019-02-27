@@ -1,3 +1,4 @@
+import multiprocessing
 import copy
 import glob
 import os
@@ -70,6 +71,13 @@ except OSError:
     for f in files:
         os.remove(f)
 
+def _tb_task(path_tb):
+    # import tensorflow as tf
+    # from tensorboard import main as tb
+    # tf.flags.FLAGS.logdir = path_tb
+    # tb.main()
+    import os
+    os.system('tensorboard --logdir=' + path_tb)
 
 def main():
 
@@ -78,7 +86,8 @@ def main():
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
-
+    p = multiprocessing.Process(target=_tb_task,args=(args.log_dir,) ,daemon=True)
+    p.start()
     if args.vis:
         from visdom import Visdom
         viz = Visdom(port=args.port)

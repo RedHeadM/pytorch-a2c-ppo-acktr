@@ -25,7 +25,7 @@ from a2c_ppo_acktr.storage import RolloutStorage
 from a2c_ppo_acktr.utils import get_vec_normalize, update_linear_schedule
 from a2c_ppo_acktr.visualize import visdom_plot,td_plot
 from bulletrobotgym.utils.blogging import log, suppress_logging,set_log_file
-from bulletrobotgym.utils.comm import makedir_if_not_exists
+from bulletrobotgym.utils.comm import makedir_if_not_exists,suppress_stdout
 
 register(
     id='tcn-push-v0',
@@ -74,26 +74,33 @@ except OSError:
     for f in files:
         os.remove(f)
 
-def _tb_task(path_tb):
-    # import tensorflow as tf
-    # from tensorboard import main as tb
-    # tf.flags.FLAGS.logdir = path_tb
-    # tf.flags.FLAGS.port = 5000
-    # tb.main()
-    # import tensorboard as tb
-    # import tensorboard.program
-    # import tensorboard.default
-    # tb.program.FLAGS.logdir =path_tb
-    # tb.program.FLAGS.port =5000
-    # tb.program.main(tb.default.get_plugins(),
-                # tb.default.get_assets_zip_provider())
-    # import os
-    # os.system('tensorboard --port=6008 --logdir=' + path_tb)
-
-    # subprocess.call('tensorboard --port=5000 --logdir=' + path_tb,shell=True)
-    with _start_subprocess('tensorboard --port=5005 --logdir=' + path_tb):
+def _tb_task(path_tb,port):
+    with _start_subprocess('tensorboard --port={} --logdir={}'.format(port, path_tb)):
         while True:
             time.sleep(10)
+    # import tensorboard
+    # from tensorboard import default
+    # from tensorboard import program
+    # import logging
+
+    # class TensorBoardTool:
+        # '''Tensorboard V1.12 start'''
+        # def __init__(self, dir_path,port):
+            # self.dir_path = dir_path
+            # self.port=port
+        # def run(self):
+            # # Remove http messages
+            # log = logging.getLogger('werkzeug').setLevel(logging.ERROR)
+            # # Start tensorboard server
+            # tb = program.TensorBoard(default.get_plugins(), default.get_assets_zip_provider())
+            # tb.configure(argv=[None, '--logdir', self.dir_path,'--port',str(self.port)])
+            # url = tb.launch()
+            # print('TensorBoard at %s \n' % url)
+    # # Tensorboard tool launch
+    # with suppress_stdout():
+        # tb_tool = TensorBoardTool(path_tb,port)
+        # tb_tool.run()
+
 @contextmanager
 def _start_subprocess(cmd):
     # The os.setsid() is passed in the argument preexec_fn so
@@ -101,9 +108,8 @@ def _start_subprocess(cmd):
     pro = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                            shell=True, preexec_fn=os.setsid)
     try:
-        yield
+        yield pro
     except:
-        print('bar')
         os.killpg(os.getpgid(pro.pid), signal.SIGTERM)  # Send the signal to all the process groups
 
 
@@ -115,8 +121,9 @@ def main():
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
-    p = multiprocessing.Process(target=_tb_task,args=(tb_path,) ,daemon=True)
+    p = multiprocessing.Process(target=_tb_task,args=(tb_path,5009) ,daemon=True)
     p.start()
+    # _tb_task(tb_path,port=5008)
     if args.vis:
         from visdom import Visdom
         viz = Visdom(port=args.port)

@@ -75,38 +75,42 @@ except OSError:
         os.remove(f)
 
 def _tb_task(path_tb,port):
-    with _start_subprocess('tensorboard --port={} --logdir={}'.format(port, path_tb)):
-        while True:
-            time.sleep(10)
-    # import tensorboard
-    # from tensorboard import default
-    # from tensorboard import program
-    # import logging
-
-    # class TensorBoardTool:
-        # '''Tensorboard V1.12 start'''
-        # def __init__(self, dir_path,port):
-            # self.dir_path = dir_path
-            # self.port=port
-        # def run(self):
-            # # Remove http messages
-            # log = logging.getLogger('werkzeug').setLevel(logging.ERROR)
-            # # Start tensorboard server
-            # tb = program.TensorBoard(default.get_plugins(), default.get_assets_zip_provider())
-            # tb.configure(argv=[None, '--logdir', self.dir_path,'--port',str(self.port)])
-            # url = tb.launch()
-            # print('TensorBoard at %s \n' % url)
-    # # Tensorboard tool launch
     # with suppress_stdout():
-        # tb_tool = TensorBoardTool(path_tb,port)
-        # tb_tool.run()
+        # with _start_subprocess('tensorboard --port={} --logdir={}'.format(port, path_tb)):
+            # while True:
+                # time.sleep(10)
+    import tensorboard
+    from tensorboard import default
+    from tensorboard import program
+    import logging
+
+    class TensorBoardTool:
+        '''Tensorboard V1.12 start'''
+        def __init__(self, dir_path,port):
+            self.dir_path = dir_path
+            self.port=port
+        def run(self):
+            # Remove http messages
+            log = logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+            logging.getLogger("tensorflow").setLevel(logging.WARNING)
+            # Start tensorboard server
+            tb = program.TensorBoard(default.get_plugins(), default.get_assets_zip_provider())
+            tb.configure(argv=[None, '--logdir', self.dir_path,'--port',str(self.port)])
+            url = tb.launch()
+            print('TensorBoard at %s \n' % url)
+    # Tensorboard tool launch
+    with suppress_stdout():
+        tb_tool = TensorBoardTool(path_tb,port)
+        tb_tool.run()
 
 @contextmanager
 def _start_subprocess(cmd):
     # The os.setsid() is passed in the argument preexec_fn so
     # it's run after the fork() and before  exec() to run the shell.
     pro = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                           shell=True, preexec_fn=os.setsid)
+                           shell=True,
+                           preexec_fn=os.setsid)
     try:
         yield pro
     except:
@@ -121,9 +125,9 @@ def main():
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
-    p = multiprocessing.Process(target=_tb_task,args=(tb_path,5009) ,daemon=True)
-    p.start()
-    # _tb_task(tb_path,port=5008)
+    # p = multiprocessing.Process(target=_tb_task,args=(tb_path,5013) ,daemon=True)
+    # p.start()
+    _tb_task(tb_path,port=5013)
     if args.vis:
         from visdom import Visdom
         viz = Visdom(port=args.port)

@@ -5,6 +5,7 @@ import os
 import time
 from collections import deque
 
+import subprocess
 import gym
 import numpy as np
 import torch
@@ -14,7 +15,8 @@ import torch.optim as optim
 from contextlib import redirect_stdout
 from gym.envs.registration import register
 from tensorboardX import SummaryWriter
-
+from contextlib import contextmanager
+import signal
 from a2c_ppo_acktr import algo
 from a2c_ppo_acktr.arguments import get_args
 from a2c_ppo_acktr.envs import make_vec_envs
@@ -87,8 +89,24 @@ def _tb_task(path_tb):
                 # tb.default.get_assets_zip_provider())
     # import os
     # os.system('tensorboard --port=6008 --logdir=' + path_tb)
-    import subprocess
-    subprocess.call('tensorboard --port=5000 --logdir=' + path_tb,shell=True)
+
+    # subprocess.call('tensorboard --port=5000 --logdir=' + path_tb,shell=True)
+    with _start_subprocess('tensorboard --port=5005 --logdir=' + path_tb):
+        while True:
+            time.sleep(10)
+@contextmanager
+def _start_subprocess(cmd):
+    # The os.setsid() is passed in the argument preexec_fn so
+    # it's run after the fork() and before  exec() to run the shell.
+    pro = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                           shell=True, preexec_fn=os.setsid)
+    try:
+        yield
+    except:
+        print('bar')
+        os.killpg(os.getpgid(pro.pid), signal.SIGTERM)  # Send the signal to all the process groups
+
+
 def main():
     tb_path=os.path.join(
         os.path.expanduser(args.log_dir), "tensorboard_log")

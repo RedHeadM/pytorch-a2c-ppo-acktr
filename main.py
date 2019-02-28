@@ -23,6 +23,7 @@ from a2c_ppo_acktr.storage import RolloutStorage
 from a2c_ppo_acktr.utils import get_vec_normalize, update_linear_schedule
 from a2c_ppo_acktr.visualize import visdom_plot,td_plot
 from bulletrobotgym.utils.blogging import log, suppress_logging,set_log_file
+from bulletrobotgym.utils.comm import makedir_if_not_exists
 
 register(
     id='tcn-push-v0',
@@ -75,18 +76,28 @@ def _tb_task(path_tb):
     # import tensorflow as tf
     # from tensorboard import main as tb
     # tf.flags.FLAGS.logdir = path_tb
+    # tf.flags.FLAGS.port = 5000
     # tb.main()
-    import os
-    os.system('tensorboard --logdir=' + path_tb)
-
+    # import tensorboard as tb
+    # import tensorboard.program
+    # import tensorboard.default
+    # tb.program.FLAGS.logdir =path_tb
+    # tb.program.FLAGS.port =5000
+    # tb.program.main(tb.default.get_plugins(),
+                # tb.default.get_assets_zip_provider())
+    # import os
+    # os.system('tensorboard --port=6008 --logdir=' + path_tb)
+    import subprocess
+    subprocess.call('tensorboard --port=5000 --logdir=' + path_tb,shell=True)
 def main():
-
-    writer = SummaryWriter(os.path.join(
-        os.path.expanduser(args.log_dir), "tensorboard_log"))
+    tb_path=os.path.join(
+        os.path.expanduser(args.log_dir), "tensorboard_log")
+    makedir_if_not_exists(tb_path)
+    writer = SummaryWriter(tb_path)
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
-    p = multiprocessing.Process(target=_tb_task,args=(args.log_dir,) ,daemon=True)
+    p = multiprocessing.Process(target=_tb_task,args=(tb_path,) ,daemon=True)
     p.start()
     if args.vis:
         from visdom import Visdom

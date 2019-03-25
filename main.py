@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from contextlib import redirect_stdout
-from gym.envs.registration import register
+
 from tensorboardX import SummaryWriter
 from contextlib import contextmanager
 import signal
@@ -26,7 +26,7 @@ from a2c_ppo_acktr.utils import get_vec_normalize, update_linear_schedule
 from a2c_ppo_acktr.visualize import visdom_plot,td_plot
 from bulletrobotgym.utils.blogging import log, suppress_logging,set_log_file
 from bulletrobotgym.utils.comm import makedir_if_not_exists,suppress_stdout
-
+from gym.envs.registration import register
 register(
     id='tcn-push-v0',
     entry_point='bulletrobotgym.env_tcn:TcnPush',
@@ -38,7 +38,7 @@ args.log_dir=os.path.expanduser(args.log_dir)
 os.environ["OPENAI_LOGDIR"]=args.log_dir
 os.environ["TCN_ENV_VID_LOG_FOLDER"]='train_vid'
 
-os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1000'
+os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '100'
 set_log_file(os.path.join(args.log_dir, "env.log"))
 
 
@@ -135,7 +135,6 @@ def main():
 
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
                         args.gamma, args.log_dir, args.add_timestep, device, False)
-
     actor_critic = Policy(envs.observation_space.shape, envs.action_space,
         base_kwargs={'recurrent': args.recurrent_policy})
     actor_critic.to(device)

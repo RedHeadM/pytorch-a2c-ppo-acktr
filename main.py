@@ -163,6 +163,11 @@ def main():
 
     episode_rewards = deque(maxlen=10)
     start = time.time()
+
+    basline_rw_episode_rec=[]
+    basline_rw_episode_mse=[]
+
+    basline_rw_episode_tcn=[]
     for j in range(num_updates):
 
         if args.use_linear_lr_decay:
@@ -186,10 +191,23 @@ def main():
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-
             for info in infos:
+                if 'basline_rw_mse' in info:
+                    basline_rw_episode_mse.append(info['basline_rw_mse'])
+                    basline_rw_episode_rec.append(info['basline_rw_rec'])
+                if 'basline_rw_tcn' in info:
+                    basline_rw_episode_tcn.append(info['basline_rw_tcn'])
+
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
+                    writer.add_scalar('basline/rw_mse', np.sum(basline_rw_episode_mse), j)
+                    writer.add_scalar('basline/rw_rec', np.sum(basline_rw_episode_rec), j)
+                    if 'basline_rw_tcn' in info:
+                        writer.add_scalar('basline/rw_tcn', np.sum(basline_rw_episode_tcn), j)
+                    writer.add_scalar('basline/rw_push_dist', info['basline_rw_push_dist'], j)
+                    basline_rw_episode_mse=[]
+                    basline_rw_episode_rec=[]
+                    basline_rw_episode_tcn=[]
 
             # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]

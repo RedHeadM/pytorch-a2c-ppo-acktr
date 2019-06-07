@@ -259,7 +259,7 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
 
-        if (args.eval_interval is not None
+        if j == num_updates or (args.eval_interval is not None
                 and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
 

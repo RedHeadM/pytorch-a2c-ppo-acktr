@@ -2,6 +2,9 @@
 
 ## Please use hyper parameters from this readme. With other hyper parameters things might not work (it's RL after all)!
 
+use tensorflow 2.12
+
+
 This is a PyTorch implementation of
 * Advantage Actor Critic (A2C), a synchronous deterministic version of [A3C](https://arxiv.org/pdf/1602.01783v1.pdf)
 * Proximal Policy Optimization [PPO](https://arxiv.org/pdf/1707.06347.pdf)

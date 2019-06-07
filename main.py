@@ -221,7 +221,7 @@ def main():
 
         writer_step=j
         writer.add_scalar('basline/rw_mse', np.mean(basline_rw_episode_mse), writer_step)
-        writer.add_scalar('basline/episodes', np.mean(basline_rw_episode_mse), writer_step)
+        writer.add_scalar('basline/episodes',num_eps, writer_step)
         writer.add_scalar('basline/rw_rec', np.mean(basline_rw_episode_rec),writer_step)
         len_eps=np.mean(basline_rw_episode_len)
         writer.add_scalar('basline/len',len_eps,writer_step)

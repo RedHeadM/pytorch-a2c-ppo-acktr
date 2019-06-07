@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from contextlib import redirect_stdout
-
+from collections import defaultdict
 from tensorboardX import SummaryWriter
 from contextlib import contextmanager
 import signal
@@ -223,7 +223,7 @@ def main():
                     num_steps_basline_info['push_distance'].append(info['basline_rw_push_dist'])
                     # take mean over eps
                     for k, step_vals in env_basline_info.items():
-                       num_steps_basline_info.append(np.mean(step_vals))
+                       num_steps_basline_info[k].append(np.mean(step_vals))
                     # add baseline infos
                     num_eps+=1
                     env_basline_info=defaultdict(list)
@@ -234,11 +234,7 @@ def main():
                                        for done_ in done])
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks)
 
-        writer_step=j
-        for k, vals_step_eps in num_steps_basline_info.items():
-            writer.add_scalar('basline/'+k, np.mean(vals_step_eps), writer_step)
-        writer.add_scalar('basline/episodes',num_eps, writer_step)
-        len_eps=np.mean(num_steps_basline_info['len_episode'])
+
 
 
 
@@ -272,6 +268,11 @@ def main():
             torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
 
         total_num_steps = (j + 1) * args.num_processes * args.num_steps
+        writer_step=total_num_steps
+        for k, vals_step_eps in num_steps_basline_info.items():
+            writer.add_scalar('basline/'+k, np.mean(vals_step_eps), writer_step)
+        writer.add_scalar('basline/episodes',num_eps, writer_step)
+        len_eps=np.mean(num_steps_basline_info['len_episode'])
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             end = time.time()

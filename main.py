@@ -130,7 +130,8 @@ def main():
     device = torch.device("cuda:0" if args.cuda else "cpu")
     # p = multiprocessing.Process(target=_tb_task,args=(tb_path,5013) ,daemon=True)
     # p.start()
-    _tb_task(tb_path,port=5013)
+    if args.start_tb:
+        _tb_task(tb_path,port=5013)
     if args.vis:
         from visdom import Visdom
         viz = Visdom(port=args.port)

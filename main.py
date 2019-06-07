@@ -220,11 +220,11 @@ def main():
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks)
 
         writer_step=j
-        print('writer_step: {}'.format(writer_step))
         writer.add_scalar('basline/rw_mse', np.mean(basline_rw_episode_mse), writer_step)
         writer.add_scalar('basline/episodes', np.mean(basline_rw_episode_mse), writer_step)
         writer.add_scalar('basline/rw_rec', np.mean(basline_rw_episode_rec),writer_step)
-        writer.add_scalar('basline/len', np.mean(basline_rw_episode_len),writer_step)
+        len_eps=np.mean(basline_rw_episode_len)
+        writer.add_scalar('basline/len',len_eps,writer_step)
         if 'basline_rw_tcn' in info:
             writer.add_scalar('basline/rw_tcn', np.mean(basline_rw_episode_tcn), writer_step)
         writer.add_scalar('basline/rw_push_dist', np.mean(basline_rw_episode_rw_dist), writer_step)
@@ -268,7 +268,7 @@ def main():
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             end = time.time()
-            log.info("Updates {}, num timesteps {}, FPS {}  Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}".
+            log.info("Updates {}, num timesteps {}, FPS {}  Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}, len eps {}".
                 format(j, total_num_steps,
                        int(total_num_steps / (end - start)),
                        len(episode_rewards),
@@ -276,7 +276,7 @@ def main():
                        np.median(episode_rewards),
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
-                       value_loss, action_loss))
+                       value_loss, action_loss, int(len_eps)))
 
         if j == num_updates or (args.eval_interval is not None
                 and len(episode_rewards) > 1

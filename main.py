@@ -206,7 +206,7 @@ def main():
                     writer.add_scalar('basline/rw_rec', np.sum(basline_rw_episode_rec), j)
                     if 'basline_rw_tcn' in info:
                         writer.add_scalar('basline/rw_tcn', np.sum(basline_rw_episode_tcn), j)
-                    writer.add_scalar('basline/rw_push_dist', min(0.,info['basline_rw_push_dist']), j)
+                    writer.add_scalar('basline/rw_push_dist', max(0.,info['basline_rw_push_dist']), j)
                     basline_rw_episode_mse=[]
                     basline_rw_episode_rec=[]
                     basline_rw_episode_tcn=[]

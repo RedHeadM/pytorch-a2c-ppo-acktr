@@ -40,7 +40,8 @@ if args.log_tag is not None:
 os.environ["OPENAI_LOGDIR"]=args.log_dir
 os.environ["TCN_ENV_VID_LOG_FOLDER"]='train_vid'
 
-os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '100'
+train_vid_log_iter='1000'
+os.environ['TCN_ENV_VID_LOG_INTERVAL'] = train_vid_log_iter
 set_log_file(os.path.join(args.log_dir, "env.log"))
 
 
@@ -289,7 +290,7 @@ def main():
                 and j % args.eval_interval == 0):
 
             vid_log_dir = os.getenv('TCN_ENV_VID_LOG_FOLDER', '/tmp/env_tcn/train_vid')
-            vid_log_inter = os.getenv('TCN_ENV_VID_LOG_INTERVAL', '100')
+            vid_log_inter = os.getenv('TCN_ENV_VID_LOG_INTERVAL', train_vid_log_iter)
             os.environ['TCN_ENV_VID_LOG_FOLDER'] ="eval_vid"# os.path.join(vid_log_dir,"../eval_vid/","interval_"+str(j))
             os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '1'
             os.environ['TCN_ENV_EVAL_EPISODE']='1'

@@ -168,6 +168,11 @@ def main():
     basline_rw_episode_mse=[]
 
     basline_rw_episode_tcn=[]
+    basline_rw_episode_len=[]
+    basline_rw_episode_rw_dist=[]
+    num_eps=0 # num training eps
+    num_steps=0 # num training eps
+
     for j in range(num_updates):
 
         if args.use_linear_lr_decay:
@@ -192,6 +197,8 @@ def main():
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
             for info in infos:
+            # episode is done
+                    # add addisiotnal baseline rw info in infos:
                 if 'basline_rw_mse' in info:
                     basline_rw_episode_mse.append(info['basline_rw_mse'])
                     basline_rw_episode_rec.append(info['basline_rw_rec'])
@@ -199,22 +206,34 @@ def main():
                     basline_rw_episode_tcn.append(info['basline_rw_tcn'])
 
                 if 'episode' in info.keys():
-                    # episode is done
-                    # add addisiotnal baseline rw
+                    # end of episode
                     episode_rewards.append(info['episode']['r'])
-                    writer.add_scalar('basline/rw_mse', np.sum(basline_rw_episode_mse), j)
-                    writer.add_scalar('basline/rw_rec', np.sum(basline_rw_episode_rec), j)
-                    if 'basline_rw_tcn' in info:
-                        writer.add_scalar('basline/rw_tcn', np.sum(basline_rw_episode_tcn), j)
-                    writer.add_scalar('basline/rw_push_dist', max(0.,info['basline_rw_push_dist']), j)
-                    basline_rw_episode_mse=[]
-                    basline_rw_episode_rec=[]
-                    basline_rw_episode_tcn=[]
+                    basline_rw_episode_len.append(info['episode']['l'])
+                    basline_rw_episode_rw_dist.append(info['basline_rw_push_dist'])
+                    # add baseline infos
+                    num_eps+=1
 
-            # If done then clean the history of observations.
+
+              # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks)
+
+        writer_step=j
+        print('writer_step: {}'.format(writer_step))
+        writer.add_scalar('basline/rw_mse', np.mean(basline_rw_episode_mse), writer_step)
+        writer.add_scalar('basline/episodes', np.mean(basline_rw_episode_mse), writer_step)
+        writer.add_scalar('basline/rw_rec', np.mean(basline_rw_episode_rec),writer_step)
+        writer.add_scalar('basline/len', np.mean(basline_rw_episode_len),writer_step)
+        if 'basline_rw_tcn' in info:
+            writer.add_scalar('basline/rw_tcn', np.mean(basline_rw_episode_tcn), writer_step)
+        writer.add_scalar('basline/rw_push_dist', np.mean(basline_rw_episode_rw_dist), writer_step)
+        basline_rw_episode_mse=[]
+        basline_rw_episode_rec=[]
+        basline_rw_episode_tcn=[]
+        basline_rw_episode_rw_dist=[]
+        basline_rw_episode_len=[]
+
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],

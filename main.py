@@ -177,6 +177,9 @@ def main():
     num_eps=0 # num training eps
     num_steps=0 # num training eps
 
+    # list of all values all eps in num updates
+    num_steps_basline_info=defaultdict(list)
+
     for j in range(num_updates):
 
         if args.use_linear_lr_decay:
@@ -190,6 +193,7 @@ def main():
         if args.algo == 'ppo' and args.use_linear_clip_decay:
             agent.clip_param = args.clip_param  * (1 - j / float(num_updates))
 
+        env_basline_info=defaultdict(list)
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
@@ -204,18 +208,24 @@ def main():
             # episode is done
                     # add addisiotnal baseline rw info in infos:
                 if 'basline_rw_mse' in info:
-                    basline_rw_episode_mse.append(info['basline_rw_mse'])
-                    basline_rw_episode_rec.append(info['basline_rw_rec'])
+                    env_basline_info['rw_mse'].append(info['basline_rw_mse'])
+                    env_basline_info['rw_rec'].append(info['basline_rw_rec'])
                 if 'basline_rw_tcn' in info:
-                    basline_rw_episode_tcn.append(info['basline_rw_tcn'])
+                    env_basline_info['rw_tcn'].append(info['basline_rw_tcn'])
 
                 if 'episode' in info.keys():
                     # end of episode
                     episode_rewards.append(info['episode']['r'])
-                    basline_rw_episode_len.append(info['episode']['l'])
-                    basline_rw_episode_rw_dist.append(info['basline_rw_push_dist'])
+
+                    num_steps_basline_info['len_episode'].append(info['episode']['l'])
+                    # distance of the pushed block
+                    num_steps_basline_info['push_distance'].append(info['basline_rw_push_dist'])
+                    # take mean over eps
+                    for k, step_vals in env_basline_info.items():
+                       num_steps_basline_info.append(np.mean(step_vals))
                     # add baseline infos
                     num_eps+=1
+                    env_basline_info=defaultdict(list)
 
 
               # If done then clean the history of observations.
@@ -224,19 +234,11 @@ def main():
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks)
 
         writer_step=j
-        writer.add_scalar('basline/rw_mse', np.mean(basline_rw_episode_mse), writer_step)
+        for k, vals_step_eps in num_steps_basline_info.items():
+            writer.add_scalar('basline/'+k, np.mean(vals_step_eps), writer_step)
         writer.add_scalar('basline/episodes',num_eps, writer_step)
-        writer.add_scalar('basline/rw_rec', np.mean(basline_rw_episode_rec),writer_step)
-        len_eps=np.mean(basline_rw_episode_len)
-        writer.add_scalar('basline/len',len_eps,writer_step)
-        if 'basline_rw_tcn' in info:
-            writer.add_scalar('basline/rw_tcn', np.mean(basline_rw_episode_tcn), writer_step)
-        writer.add_scalar('basline/rw_push_dist', np.mean(basline_rw_episode_rw_dist), writer_step)
-        basline_rw_episode_mse=[]
-        basline_rw_episode_rec=[]
-        basline_rw_episode_tcn=[]
-        basline_rw_episode_rw_dist=[]
-        basline_rw_episode_len=[]
+        len_eps=np.mean(num_steps_basline_info['len_episode'])
+
 
 
         with torch.no_grad():

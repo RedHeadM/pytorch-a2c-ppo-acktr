@@ -279,8 +279,8 @@ def main():
                        np.mean(episode_rewards),
                        np.median(episode_rewards),
                        np.min(episode_rewards),
-                       np.max(episode_rewards), dist_entropy,
-                       value_loss, action_loss, int(len_eps)))
+                       np.max(episode_rewards),int(len_eps), dist_entropy,
+                       value_loss, action_loss))
 
         if j == num_updates or (args.eval_interval is not None
                 and len(episode_rewards) > 1

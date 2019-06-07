@@ -34,6 +34,8 @@ register(
 
 args = get_args()
 args.log_dir=os.path.expanduser(args.log_dir)
+if args.log_tag is not None:
+    args.log_dir+="_"+args.log_tag
 
 os.environ["OPENAI_LOGDIR"]=args.log_dir
 os.environ["TCN_ENV_VID_LOG_FOLDER"]='train_vid'
@@ -42,6 +44,7 @@ os.environ['TCN_ENV_VID_LOG_INTERVAL'] = '100'
 set_log_file(os.path.join(args.log_dir, "env.log"))
 
 
+log.info('log_dir: {}'.format(args.log_dir))
 log.info(args)
 assert args.algo in ['a2c', 'ppo', 'acktr']
 if args.recurrent_policy:

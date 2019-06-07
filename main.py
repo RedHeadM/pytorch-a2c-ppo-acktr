@@ -199,12 +199,14 @@ def main():
                     basline_rw_episode_tcn.append(info['basline_rw_tcn'])
 
                 if 'episode' in info.keys():
+                    # episode is done
+                    # add addisiotnal baseline rw
                     episode_rewards.append(info['episode']['r'])
                     writer.add_scalar('basline/rw_mse', np.sum(basline_rw_episode_mse), j)
                     writer.add_scalar('basline/rw_rec', np.sum(basline_rw_episode_rec), j)
                     if 'basline_rw_tcn' in info:
                         writer.add_scalar('basline/rw_tcn', np.sum(basline_rw_episode_tcn), j)
-                    writer.add_scalar('basline/rw_push_dist', info['basline_rw_push_dist'], j)
+                    writer.add_scalar('basline/rw_push_dist', min(0.,info['basline_rw_push_dist']), j)
                     basline_rw_episode_mse=[]
                     basline_rw_episode_rec=[]
                     basline_rw_episode_tcn=[]

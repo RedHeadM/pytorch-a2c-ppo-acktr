@@ -262,6 +262,7 @@ def main():
             torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
 
         total_num_steps = (j + 1) * args.num_processes * args.num_steps
+        # write baseline finfos for tcn
         writer_step=total_num_steps
         for k, vals_step_eps in num_steps_basline_info.items():
             writer.add_scalar('basline/'+k, np.mean(vals_step_eps), writer_step)

@@ -217,7 +217,7 @@ def main():
                     num_steps_basline_info['push_distance'].append(info['basline_rw_push_dist'])
                     # take mean over eps
                     for k, step_vals in env_basline_info.items():
-                       num_steps_basline_info[k].append(np.mean(step_vals))
+                       num_steps_basline_info[k].append(np.sum(step_vals))
                     # add baseline infos
                     num_eps+=1
                     env_basline_info=defaultdict(list)

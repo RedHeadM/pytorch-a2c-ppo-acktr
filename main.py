@@ -169,20 +169,14 @@ def main():
     episode_rewards = deque(maxlen=10)
     start = time.time()
 
-    basline_rw_episode_rec=[]
-    basline_rw_episode_mse=[]
-
-    basline_rw_episode_tcn=[]
-    basline_rw_episode_len=[]
-    basline_rw_episode_rw_dist=[]
     num_eps=0 # num training eps
     num_steps=0 # num training eps
 
-    # list of all values all eps in num updates
-    num_steps_basline_info=defaultdict(list)
 
     for j in range(num_updates):
 
+        # list of all values all eps in num updates
+        num_steps_basline_info=defaultdict(list)
         if args.use_linear_lr_decay:
             # decrease learning rate linearly
             if args.algo == "acktr":

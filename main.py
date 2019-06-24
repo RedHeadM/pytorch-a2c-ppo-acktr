@@ -27,10 +27,10 @@ from a2c_ppo_acktr.visualize import visdom_plot,td_plot
 from bulletrobotgym.utils.blogging import log, suppress_logging,set_log_file
 from bulletrobotgym.utils.comm import makedir_if_not_exists,suppress_stdout
 from gym.envs.registration import register
-register(
-    id='tcn-push-v0',
-    entry_point='bulletrobotgym.env_tcn:TcnPush',
-)
+# register(
+    # id='tcn-push-v0',
+    # entry_point='bulletrobotgym.env_tcn:TcnPush',
+# )
 
 args = get_args()
 args.log_dir=os.path.expanduser(args.log_dir)

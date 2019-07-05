@@ -40,7 +40,7 @@ if args.log_tag is not None:
 os.environ["OPENAI_LOGDIR"]=args.log_dir
 os.environ["TCN_ENV_VID_LOG_FOLDER"]='train_vid'
 
-train_vid_log_iter='1000'
+train_vid_log_iter='100'
 os.environ['TCN_ENV_VID_LOG_INTERVAL'] = train_vid_log_iter
 set_log_file(os.path.join(args.log_dir, "env.log"))
 
